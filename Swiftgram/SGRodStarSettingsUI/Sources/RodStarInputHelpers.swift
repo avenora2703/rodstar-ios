@@ -39,20 +39,20 @@ private final class RodStarTextEditorController: ViewController {
         self.editorTitle = title
         self.initialText = text
         self.saveImpl = save
-        super.init(nibName: nil, bundle: nil)
+        super.init(navigationBarPresentationData: nil)
     }
 
-    required init?(coder: NSCoder) {
+    required init(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
 
     override func viewDidLoad() {
         super.viewDidLoad()
         let presentationData = self.context.sharedContext.currentPresentationData.with { $0 }
-        self.view.backgroundColor = presentationData.theme.rootController.navigationBar.backgroundColor
+        self.view.backgroundColor = presentationData.theme.rootController.navigationBar.opaqueBackgroundColor
 
         let bar = UIView()
-        bar.backgroundColor = presentationData.theme.rootController.navigationBar.backgroundColor
+        bar.backgroundColor = presentationData.theme.rootController.navigationBar.opaqueBackgroundColor
         bar.translatesAutoresizingMaskIntoConstraints = false
         self.view.addSubview(bar)
 

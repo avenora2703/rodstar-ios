@@ -144,8 +144,7 @@ public func sgRodStarChangerSettingsController(context: AccountContext) -> ViewC
         case .fillInstalledPacks:
             let _ = (context.engine.data.get(TelegramEngine.EngineData.Item.ItemCollections.InstalledPackInfos(namespace: Namespaces.ItemCollection.CloudStickerPacks))
             |> take(1)
-            |> deliverOnMainQueue
-            |> start(next: { entries in
+            |> deliverOnMainQueue).start(next: { entries in
                 let names = entries.compactMap { entry -> String? in
                     if let info = entry.info as? StickerPackCollectionInfo, !info.shortName.isEmpty {
                         return info.shortName
@@ -154,12 +153,11 @@ public func sgRodStarChangerSettingsController(context: AccountContext) -> ViewC
                 }
                 settings.stickerPacks = names.joined(separator: "\n")
                 simplePromise.set(true)
-            }))
+            })
         case .fillSavedGifs:
             let _ = (context.engine.data.get(TelegramEngine.EngineData.Item.OrderedLists.ListItems(collectionId: Namespaces.OrderedItemList.CloudRecentGifs))
             |> take(1)
-            |> deliverOnMainQueue
-            |> start(next: { entries in
+            |> deliverOnMainQueue).start(next: { entries in
                 let ids = entries.compactMap { entry -> String? in
                     guard let item = entry.contents.get(RecentMediaItem.self) else {
                         return nil
@@ -168,7 +166,7 @@ public func sgRodStarChangerSettingsController(context: AccountContext) -> ViewC
                 }
                 settings.gifIds = ids.joined(separator: "\n")
                 simplePromise.set(true)
-            }))
+            })
         case .exportBanwords:
             UIPasteboard.general.string = settings.banwords
             let alert = UIAlertController(title: "Экспорт банвордов", message: "Скопировано в буфер обмена", preferredStyle: .alert)

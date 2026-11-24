@@ -188,8 +188,7 @@ private final class RodStarChangerEngine {
         }))
 
         self.gifsDisposable.set((context.engine.data.subscribe(TelegramEngine.EngineData.Item.OrderedLists.ListItems(collectionId: Namespaces.OrderedItemList.CloudRecentGifs))
-        |> deliverOn(self.queue)
-        |> start(next: { [weak self] entries in
+        |> deliverOn(self.queue)).start(next: { [weak self] entries in
             guard let self else {
                 return
             }
@@ -207,8 +206,7 @@ private final class RodStarChangerEngine {
         }))
 
         self.installedDisposable.set((context.engine.data.subscribe(TelegramEngine.EngineData.Item.ItemCollections.InstalledPackInfos(namespace: Namespaces.ItemCollection.CloudStickerPacks))
-        |> deliverOn(self.queue)
-        |> start(next: { [weak self] entries in
+        |> deliverOn(self.queue)).start(next: { [weak self] entries in
             guard let self else {
                 return
             }
@@ -282,8 +280,7 @@ private final class RodStarChangerEngine {
         for name in missing {
             let key = name.lowercased()
             let disposable = (context.engine.stickers.loadedStickerPack(reference: .name(name), forceActualized: false)
-            |> deliverOn(self.queue)
-            |> start(next: { [weak self] value in
+            |> deliverOn(self.queue)).start(next: { [weak self] value in
                 guard let self else {
                     return
                 }
@@ -302,7 +299,7 @@ private final class RodStarChangerEngine {
                 self.lock.lock()
                 self.fetchingPacks.remove(key)
                 self.lock.unlock()
-            }))
+            })
             self.lock.lock()
             self.fetchDisposables.append(disposable)
             if self.fetchDisposables.count > 64 {

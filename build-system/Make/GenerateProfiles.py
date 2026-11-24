@@ -7,6 +7,7 @@ import plistlib
 import argparse
 import subprocess
 import base64
+import datetime
 
 from BuildEnvironment import run_executable_with_output, check_run_system
 
@@ -102,6 +103,15 @@ def process_provisioning_profile(source, destination, certificate_data, signing_
     parsed_plist_file = tempfile.mktemp()
     with open(parsed_plist_file, 'w+') as file:
         file.write(parsed_plist)
+
+    # The committed fake profiles expire; refresh dates so plisttool accepts them.
+    with open(parsed_plist_file, 'rb') as file:
+        profile_plist = plistlib.load(file)
+    now = datetime.datetime.now(datetime.timezone.utc)
+    profile_plist['CreationDate'] = now
+    profile_plist['ExpirationDate'] = now + datetime.timedelta(days=365)
+    with open(parsed_plist_file, 'wb') as file:
+        plistlib.dump(profile_plist, file)
 
     # Remove all existing developer certificates
     while True:

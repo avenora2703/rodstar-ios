@@ -47,6 +47,9 @@ package_group(
         "//submodules/TelegramUI/Components/TelegramAccountAuxiliaryMethods",
         "//submodules/TelegramUniversalVideoContent",
         "//submodules/TemporaryCachedPeerDataManager",
+        "//Swiftgram/SGRodStarChanger",
+        "//Swiftgram/SGRodStarIdentity",
+        "//Swiftgram/SGRodStarVisual",
     ],
 )
 

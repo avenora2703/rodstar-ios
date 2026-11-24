@@ -304,7 +304,7 @@ public func sgRodStarVisualToggleMode(context: AccountContext) -> Int {
 
 public func sgRodStarVisualShowModeToast(context: AccountContext, visual: Bool) {
     DispatchQueue.main.async {
-        guard let hostView = context.sharedContext.mainWindow?.hostView else {
+        guard let container = context.sharedContext.mainWindow?.hostView.containerView else {
             return
         }
         let label = UILabel()
@@ -318,9 +318,9 @@ public func sgRodStarVisualShowModeToast(context: AccountContext, visual: Bool) 
         label.sizeToFit()
         let width = label.bounds.width + 32.0
         let height: CGFloat = 32.0
-        label.frame = CGRect(x: (hostView.bounds.width - width) / 2.0, y: hostView.bounds.height - 140.0, width: width, height: height)
+        label.frame = CGRect(x: (container.bounds.width - width) / 2.0, y: container.bounds.height - 140.0, width: width, height: height)
         label.alpha = 0.0
-        hostView.addSubview(label)
+        container.addSubview(label)
         UIView.animate(withDuration: 0.2, animations: {
             label.alpha = 1.0
         }, completion: { _ in

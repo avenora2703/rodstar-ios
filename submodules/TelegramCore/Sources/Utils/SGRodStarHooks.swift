@@ -1,4 +1,5 @@
 import Foundation
+import Postbox
 
 // MARK: Swiftgram
 // Hook registry for RodStar modules. TelegramCore cannot depend on the RodStar

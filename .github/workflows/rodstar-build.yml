@@ -9,6 +9,8 @@ jobs:
   build:
     runs-on: xcode-27
     timeout-minutes: 350
+    permissions:
+      contents: write
 
     steps:
       - uses: actions/checkout@v4

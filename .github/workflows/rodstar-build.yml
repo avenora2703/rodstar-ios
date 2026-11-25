@@ -78,7 +78,7 @@ jobs:
           rm -rf "$OUTPUT_PATH"
           mkdir -p "$OUTPUT_PATH"
           IPA_SRC=""
-          for f in bazel-out/applebin_ios-ios_arm*-opt-ST-*/bin/Telegram/Swiftgram.ipa bazel-out/applebin_ios-ios_arm*-opt-ST-*/bin/Telegram/Telegram.ipa; do
+          for f in bazel-bin/Telegram/Swiftgram.ipa bazel-bin/Telegram/Telegram.ipa; do
             if [ -f "$f" ]; then IPA_SRC="$f"; break; fi
           done
           if [ -z "$IPA_SRC" ]; then echo "IPA not found"; exit 1; fi

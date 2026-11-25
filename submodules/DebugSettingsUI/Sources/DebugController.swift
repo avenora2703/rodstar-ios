@@ -162,12 +162,14 @@ private final class DebugLogsContextReferenceContentSource: ContextReferenceCont
 private enum DebugLogDestination {
     case telegram
     case email
+    case clipboard
 }
 
 private enum DebugLogAction {
     case sendLogs
     case sendOneLog
     case sgSendLogs // MARK: Swiftgram
+    case sendLogsToClipboard // MARK: RodStar
     case sendShareLogs
     case sendGroupCallLogs
     case sendNotificationLogs
@@ -180,6 +182,7 @@ private enum DebugLogAction {
         case .sendLogs: return "Logs"
         case .sendOneLog: return "Latest Logs"
         case .sgSendLogs: return "Swiftgram Logs" // MARK: Swiftgram
+        case .sendLogsToClipboard: return "Copy Logs" // MARK: RodStar
         case .sendShareLogs: return "Share Logs"
         case .sendGroupCallLogs: return "Group Call Logs"
         case .sendNotificationLogs: return "Notification Logs"
@@ -195,13 +198,31 @@ private enum DebugLogAction {
             return .secondLineWithValue("Up to 40 MB")
         case .sendOneLog:
             return .secondLineWithValue("Up to 4 MB")
-        case .sendCriticalLogs, .sendAllLogs, .sendStorageStats, .sgSendLogs: // MARK: Swiftgram
+        case .sendCriticalLogs, .sendAllLogs, .sendStorageStats, .sgSendLogs, .sendLogsToClipboard: // MARK: Swiftgram
             return .singleLine
         }
     }
 
     func perform(arguments: DebugControllerArguments, destination: DebugLogDestination) {
         switch self {
+        // MARK: RodStar — the login screen has no account, so the Telegram and Mail
+        // destinations are unavailable there; the pasteboard works before login.
+        case .sendLogsToClipboard:
+            let _ = (Logger.shared.collectLogs()
+            |> deliverOnMainQueue).start(next: { logs in
+                var text = ""
+                for (name, path) in logs.suffix(2) {
+                    if let data = try? Data(contentsOf: URL(fileURLWithPath: path)) {
+                        text += "------ \(name) ------\n"
+                        text += String(decoding: data.suffix(300 * 1024), as: UTF8.self)
+                    }
+                }
+                UIPasteboard.general.string = text
+                let message = text.isEmpty ? "No log files. Enable Log to file, restart the app, then reproduce." : "Logs copied: \(text.utf16.count / 1024) KB"
+                let alert = UIAlertController(title: nil, message: message, preferredStyle: .alert)
+                alert.addAction(UIAlertAction(title: "OK", style: .cancel))
+                arguments.getRootController()?.present(alert, animated: true, completion: nil)
+            })
         case .sendLogs:
             let _ = (Logger.shared.collectLogs()
             |> deliverOnMainQueue).start(next: { logs in
@@ -2401,13 +2422,19 @@ public func debugController(sharedContext: SharedAccountContext, context: Accoun
               let sourceNode = controller.itemNode(forTag: DebugControllerItemTag.sendLogs) as? ItemListActionItemNode else {
             return
         }
-        var options: [DebugLogAction] = [.sendLogs, .sendOneLog /* MARK: Swiftgram */, .sendShareLogs]
+        var options: [DebugLogAction] = [.sendLogs, .sendOneLog /* MARK: Swiftgram */, .sendShareLogs, .sendLogsToClipboard] // MARK: RodStar
         if arguments.context != nil {
             options.append(.sendGroupCallLogs)
         }
         options.append(contentsOf: [.sendNotificationLogs, .sendCriticalLogs, .sendAllLogs, .sendStorageStats])
         let items: [ContextMenuItem] = options.map { option in
             return .action(ContextMenuActionItem(text: option.title, textLayout: option.textLayout, icon: { _ in nil }, action: { menu, _ in
+                if option == .sendLogsToClipboard { // MARK: RodStar
+                    menu?.dismiss(completion: {
+                        option.perform(arguments: arguments, destination: .clipboard)
+                    })
+                    return
+                }
                 var subItems: [ContextMenuItem] = [
                     .action(ContextMenuActionItem(text: sharedContext.currentPresentationData.with { $0 }.strings.Common_Back, icon: { theme in
                         return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Back"), color: theme.contextMenu.primaryColor)

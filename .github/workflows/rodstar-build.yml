@@ -77,9 +77,13 @@ jobs:
           OUTPUT_PATH="build/artifacts"
           rm -rf "$OUTPUT_PATH"
           mkdir -p "$OUTPUT_PATH"
-          for f in bazel-out/applebin_ios-ios_arm*-opt-ST-*/bin/Telegram/Telegram.ipa; do
-            cp "$f" "$OUTPUT_PATH/"
+          IPA_SRC=""
+          for f in bazel-out/applebin_ios-ios_arm*-opt-ST-*/bin/Telegram/Swiftgram.ipa bazel-out/applebin_ios-ios_arm*-opt-ST-*/bin/Telegram/Telegram.ipa; do
+            if [ -f "$f" ]; then IPA_SRC="$f"; break; fi
           done
+          if [ -z "$IPA_SRC" ]; then echo "IPA not found"; exit 1; fi
+          echo "IPA_SRC=$IPA_SRC" >> $GITHUB_ENV
+          cp "$IPA_SRC" "$OUTPUT_PATH/Telegram.ipa"
           ls -la "$OUTPUT_PATH"
 
       - name: Upload IPA artifact

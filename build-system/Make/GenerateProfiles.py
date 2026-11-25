@@ -11,6 +11,21 @@ import datetime
 
 from BuildEnvironment import run_executable_with_output, check_run_system
 
+# The committed fake profiles are copies of Telegram's own ones, so their
+# application-identifier has to be moved onto our bundle id or Make.py finds no
+# profile for any target and aborts on the missing aps-environment.
+LEGACY_PROFILE_BUNDLE_ID = 'ph.telegra.Telegraph'
+
+
+def rewrite_bundle_id(value, bundle_id):
+    if isinstance(value, str):
+        return value.replace(LEGACY_PROFILE_BUNDLE_ID, bundle_id)
+    if isinstance(value, list):
+        return [rewrite_bundle_id(item, bundle_id) for item in value]
+    if isinstance(value, dict):
+        return {key: rewrite_bundle_id(item, bundle_id) for key, item in value.items()}
+    return value
+
 
 def setup_temp_keychain(p12_path, p12_password=''):
     """Create a temporary keychain and import the p12 certificate."""
@@ -98,7 +113,7 @@ def get_certificate_base64_from_p12(p12_path, p12_password=''):
     return base64.b64encode(cert_der).decode('utf-8')
 
 
-def process_provisioning_profile(source, destination, certificate_data, signing_identity, keychain_name):
+def process_provisioning_profile(source, destination, certificate_data, signing_identity, keychain_name, bundle_id=None):
     parsed_plist = run_executable_with_output('security', arguments=['cms', '-D', '-i', source], check_result=True)
     parsed_plist_file = tempfile.mktemp()
     with open(parsed_plist_file, 'w+') as file:
@@ -110,6 +125,8 @@ def process_provisioning_profile(source, destination, certificate_data, signing_
     now = datetime.datetime.now(datetime.timezone.utc)
     profile_plist['CreationDate'] = now
     profile_plist['ExpirationDate'] = now + datetime.timedelta(days=365)
+    if bundle_id is not None:
+        profile_plist = rewrite_bundle_id(profile_plist, bundle_id)
     with open(parsed_plist_file, 'wb') as file:
         plistlib.dump(profile_plist, file)
 
@@ -136,8 +153,14 @@ def process_provisioning_profile(source, destination, certificate_data, signing_
     os.unlink(parsed_plist_file)
 
 
-def generate_provisioning_profiles(source_path, destination_path, certs_path):
+def generate_provisioning_profiles(source_path, destination_path, certs_path, appstore_configuration_path=None):
     p12_path = os.path.join(certs_path, 'SelfSigned.p12')
+
+    bundle_id = None
+    if appstore_configuration_path is not None:
+        with open(appstore_configuration_path) as file:
+            bundle_id = json.load(file)['bundle_id']
+        print('Rewriting profiles onto bundle id: {}'.format(bundle_id))
 
     if not os.path.exists(p12_path):
         print('{} does not exist'.format(p12_path))
@@ -170,7 +193,8 @@ def generate_provisioning_profiles(source_path, destination_path, certs_path):
                     destination=os.path.join(destination_path, file_name),
                     certificate_data=certificate_data,
                     signing_identity=signing_identity,
-                    keychain_name=keychain_name
+                    keychain_name=keychain_name,
+                    bundle_id=bundle_id
                 )
         print('Done. Generated {} profiles.'.format(
             len([f for f in os.listdir(destination_path) if f.endswith('.mobileprovision')])

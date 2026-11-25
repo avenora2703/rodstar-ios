@@ -50,7 +50,7 @@ jobs:
       - name: Refresh fake provisioning profiles
         run: |
           cd /Users/Shared/telegram-ios/build-system/Make
-          python3 -c "import GenerateProfiles; GenerateProfiles.generate_provisioning_profiles(source_path='../fake-codesigning/profiles', destination_path='../fake-codesigning/profiles', certs_path='../fake-codesigning/certs')"
+          python3 -c "import GenerateProfiles; GenerateProfiles.generate_provisioning_profiles(source_path='../fake-codesigning/profiles', destination_path='../fake-codesigning/profiles', certs_path='../fake-codesigning/certs', appstore_configuration_path='../appstore-configuration.json')"
 
       - name: Build the App
         run: |
